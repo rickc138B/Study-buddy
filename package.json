@@ -5,7 +5,8 @@
     "start:dev": "npx nest start --watch",
     "build": "nest build",
     "start:prod": "node dist/main",
-    "db:migrate": "psql $DATABASE_URL -f sql/001_schema.sql"
+    "db:migrate": "psql $DATABASE_URL -f sql/001_schema.sql",
+    "start": "node dist/main"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
