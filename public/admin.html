@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course Assistant — Admin</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+  header { background: #1a1d2e; border-bottom: 1px solid #2d3148; padding: 14px 20px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 50; }
+  .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 4px; color: #94a3b8; }
+  header h1 { font-size: 17px; font-weight: 600; color: #fff; flex: 1; }
+  header span { background: #3b82f6; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 99px; }
+  .layout { display: grid; grid-template-columns: 260px 1fr; height: calc(100vh - 57px); overflow: hidden; }
+  .sidebar { background: #13151f; border-right: 1px solid #2d3148; overflow-y: auto; padding: 16px; transition: transform 0.25s ease; }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: #000a; z-index: 39; }
+  .main { overflow-y: auto; padding: 24px; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #475569; gap: 12px; text-align: center; padding: 32px; }
+  .sidebar h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 12px; padding: 0 4px; }
+  .course-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; border: 1px solid transparent; transition: all 0.15s; }
+  .course-item:hover { background: #1e2235; }
+  .course-item.active { background: #1e3a5f; border-color: #3b82f6; }
+  .course-item .code { font-size: 13px; font-weight: 600; color: #93c5fd; }
+  .course-item .title { font-size: 12px; color: #64748b; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .add-btn { width: 100%; padding: 8px; border-radius: 8px; border: 1px dashed #2d3148; background: transparent; color: #64748b; cursor: pointer; font-size: 13px; margin-top: 8px; transition: all 0.15s; }
+  .add-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+  .section-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+  .section-header h2 { font-size: 20px; font-weight: 600; }
+  .section-header .meta { font-size: 13px; color: #64748b; margin-top: 2px; }
+  .upload-zone { border: 2px dashed #2d3148; border-radius: 12px; padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 20px; }
+  .upload-zone:hover, .upload-zone.dragover { border-color: #3b82f6; background: #1e3a5f22; }
+  .upload-zone p { color: #64748b; font-size: 14px; margin-top: 8px; }
+  .upload-zone .hint { font-size: 12px; color: #475569; margin-top: 4px; }
+  .file-type-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .pill { padding: 6px 14px; border-radius: 99px; border: 1px solid #2d3148; background: transparent; color: #94a3b8; cursor: pointer; font-size: 13px; transition: all 0.15s; white-space: nowrap; }
+  .pill.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+  .materials-list { display: flex; flex-direction: column; gap: 8px; }
+  .material-card { background: #13151f; border: 1px solid #2d3148; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .material-card .name { font-size: 14px; font-weight: 500; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .material-card .sub { font-size: 12px; color: #475569; margin-top: 2px; }
+  .material-card .actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .status-badge.completed { background: #052e16; color: #4ade80; }
+  .status-badge.failed { background: #2d0a0a; color: #f87171; }
+  .status-badge.processing { background: #1c1d00; color: #facc15; }
+  .status-badge.pending { background: #1e2235; color: #94a3b8; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  .action-btn { padding: 5px 12px; border-radius: 6px; border: 1px solid #2d3148; background: transparent; color: #94a3b8; cursor: pointer; font-size: 12px; transition: all 0.15s; white-space: nowrap; }
+  .action-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+  .action-btn.danger:hover { border-color: #ef4444; color: #ef4444; }
+  .modal-overlay { position: fixed; inset: 0; background: #000000bb; display: flex; align-items: flex-end; justify-content: center; z-index: 100; padding: 16px; }
+  @media (min-width: 600px) { .modal-overlay { align-items: center; } }
+  .modal { background: #1a1d2e; border: 1px solid #2d3148; border-radius: 16px; padding: 24px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; }
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+  .form-group input, .form-group select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #2d3148; background: #0f1117; color: #e2e8f0; font-size: 15px; outline: none; -webkit-appearance: none; }
+  .form-group input:focus, .form-group select:focus { border-color: #3b82f6; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+  .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.15s; }
+  .btn-primary { background: #3b82f6; color: #fff; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-secondary { background: #1e2235; color: #94a3b8; border: 1px solid #2d3148; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1d2e; border: 1px solid #2d3148; border-radius: 10px; padding: 12px 20px; font-size: 14px; z-index: 200; animation: slideUp 0.2s ease; white-space: nowrap; }
+  .toast.success { border-color: #4ade80; color: #4ade80; }
+  .toast.error { border-color: #f87171; color: #f87171; }
+  @keyframes slideUp { from { transform: translateX(-50%) translateY(10px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+  .level-header { font-size: 10px; color: #475569; padding: 0 4px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+  .level-group { margin-bottom: 16px; }
+  select option { background: #1a1d2e; }
+
+  @media (max-width: 768px) {
+    .hamburger { display: block; }
+    .layout { grid-template-columns: 1fr; }
+    .sidebar {
+      position: fixed; top: 57px; left: 0; bottom: 0; width: 280px;
+      z-index: 40; transform: translateX(-100%);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay.open { display: block; }
+    .main { padding: 16px; }
+    .section-header h2 { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+  <h1>Course Assistant</h1>
+  <span>Admin</span>
+</header>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="layout">
+  <div class="sidebar" id="sidebar">
+    <h2>Courses</h2>
+    <div id="course-list"></div>
+    <button class="add-btn" onclick="openAddCourse()">+ Add Course</button>
+  </div>
+  <div class="main" id="main-panel">
+    <div class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <p>Select a course to manage materials</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="course-modal" style="display:none">
+  <div class="modal">
+    <h3>Add Course</h3>
+    <div class="form-group">
+      <label>Department</label>
+      <select id="dept-select"><option value="">Loading...</option></select>
+      <button class="add-btn" style="margin-top:8px" onclick="openAddDept()">+ New Department</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Course Code</label>
+        <input id="course-code" placeholder="e.g. CS301" />
+      </div>
+      <div class="form-group">
+        <label>Level</label>
+        <select id="course-level">
+          <option value="100">100</option>
+          <option value="200">200</option>
+          <option value="300" selected>300</option>
+          <option value="400">400</option>
+          <option value="500">500</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Course Title</label>
+      <input id="course-title" placeholder="e.g. Data Structures and Algorithms" />
+    </div>
+    <div class="form-group">
+      <label>Description (optional)</label>
+      <input id="course-desc" placeholder="Brief course description" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('course-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCourse()">Create Course</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="dept-modal" style="display:none">
+  <div class="modal">
+    <h3>Add Department</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Code</label>
+        <input id="dept-code" placeholder="e.g. CS" />
+      </div>
+      <div class="form-group">
+        <label>Name</label>
+        <input id="dept-name" placeholder="e.g. Computer Science" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('dept-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDept()">Create</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://100.121.82.80:3000';
+let courses = [], selectedCourse = null, selectedFileType = 'syllabus', pollTimers = {};
+
+async function init() {
+  try {
+    const res = await fetch(`${API}/admin/courses`);
+    if (!res.ok) throw new Error();
+    courses = await res.json();
+    renderSidebar();
+  } catch(e) {
+    showToast('Cannot reach API', 'error');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+function renderSidebar() {
+  const el = document.getElementById('course-list');
+  if (!courses.length) { el.innerHTML = '<p style="font-size:12px;color:#475569;padding:4px">No courses yet</p>'; return; }
+  const byLevel = {};
+  courses.forEach(c => { if (!byLevel[c.level]) byLevel[c.level] = []; byLevel[c.level].push(c); });
+  el.innerHTML = Object.keys(byLevel).sort().map(level => `
+    <div class="level-group">
+      <div class="level-header">${level} Level</div>
+      ${byLevel[level].map(c => `
+        <div class="course-item ${selectedCourse?.id === c.id ? 'active' : ''}" onclick="selectCourse('${c.id}')">
+          <div class="code">${c.code}</div>
+          <div class="title">${c.title}</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+async function selectCourse(id) {
+  selectedCourse = courses.find(c => c.id === id);
+  renderSidebar();
+  closeSidebar();
+  await renderMain();
+}
+
+async function renderMain() {
+  const c = selectedCourse;
+  const materials = await fetch(`${API}/admin/ingest/course/${c.id}`).then(r => r.json());
+  const dept = c.departments?.name ?? '';
+  document.getElementById('main-panel').innerHTML = `
+    <div class="section-header">
+      <div>
+        <h2>${c.code}</h2>
+        <div class="meta">${c.title} · ${dept} · Level ${c.level} · ${materials.length} file${materials.length !== 1 ? 's' : ''}</div>
+      </div>
+      <button class="action-btn danger" onclick="deleteCourse('${c.id}')">Delete</button>
+    </div>
+    <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+         ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <p>Tap to upload files</p>
+      <div class="hint">PDF, DOCX, PPTX, TXT · Multiple files</div>
+      <input type="file" id="file-input" multiple accept=".pdf,.docx,.pptx,.txt" style="display:none" onchange="handleFiles(this.files)" />
+    </div>
+    <div class="file-type-row">
+      ${['syllabus','slides','past_exam','notes','other'].map(t => `
+        <button class="pill ${selectedFileType === t ? 'active' : ''}" onclick="setFileType('${t}')">${t.replace('_',' ')}</button>
+      `).join('')}
+    </div>
+    <div class="materials-list" id="materials-list">
+      ${renderMaterialCards(materials)}
+    </div>
+  `;
+  materials.forEach(m => { if (m.status === 'pending' || m.status === 'processing') startPolling(m.id); });
+}
+
+function renderMaterialCards(materials) {
+  if (!materials.length) return `<div style="text-align:center;color:#475569;padding:32px;font-size:14px">No materials yet</div>`;
+  return materials.map(m => `
+    <div class="material-card" id="row-${m.id}">
+      <div style="flex:1;min-width:0">
+        <div class="name">${m.filename}</div>
+        <div class="sub">${m.file_type} · ${m.chunk_count ? m.chunk_count + ' chunks' : '—'} · ${new Date(m.uploaded_at).toLocaleDateString()}</div>
+        <div style="margin-top:6px">${statusBadge(m.status, m.error_message)}</div>
+      </div>
+      <div class="actions">
+        ${m.status === 'failed' ? `<button class="action-btn" onclick="reprocess('${m.id}')">Retry</button>` : ''}
+        <button class="action-btn danger" onclick="deleteMaterial('${m.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function statusBadge(status, error) {
+  const tip = error ? ` title="${error}"` : '';
+  return `<span class="status-badge ${status}"${tip}><span class="status-dot"></span>${status}</span>`;
+}
+
+function setFileType(t) {
+  selectedFileType = t;
+  document.querySelectorAll('.pill').forEach(p => {
+    p.classList.toggle('active', p.textContent.trim().replace(' ','_') === t);
+  });
+}
+
+function handleDragOver(e) { e.preventDefault(); document.getElementById('drop-zone')?.classList.add('dragover'); }
+function handleDragLeave() { document.getElementById('drop-zone')?.classList.remove('dragover'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('drop-zone')?.classList.remove('dragover'); handleFiles(e.dataTransfer.files); }
+
+async function handleFiles(files) { for (const f of files) await uploadFile(f); }
+
+async function uploadFile(file) {
+  const list = document.getElementById('materials-list');
+  const tempId = 'temp-' + Date.now();
+  const placeholder = document.createElement('div');
+  placeholder.id = tempId;
+  placeholder.className = 'material-card uploading-row';
+  placeholder.innerHTML = `<div style="flex:1"><div class="name">${file.name}</div><div style="margin-top:6px">${statusBadge('pending')}</div></div>`;
+  list.prepend(placeholder);
+
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('courseId', selectedCourse.id);
+  fd.append('fileType', selectedFileType);
+
+  try {
+    const res = await fetch(`${API}/admin/ingest/upload`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message ?? 'Upload failed');
+    placeholder.remove();
+    const card = document.createElement('div');
+    card.id = `row-${data.materialId}`;
+    card.className = 'material-card';
+    card.innerHTML = `
+      <div style="flex:1;min-width:0">
+        <div class="name">${data.filename}</div>
+        <div class="sub">${selectedFileType} · — · just now</div>
+        <div style="margin-top:6px">${statusBadge('pending')}</div>
+      </div>
+      <div class="actions"><button class="action-btn danger" onclick="deleteMaterial('${data.materialId}')">✕</button></div>
+    `;
+    list.prepend(card);
+    startPolling(data.materialId);
+    showToast(`${file.name} uploaded`, 'success');
+  } catch(e) {
+    placeholder.remove();
+    showToast(e.message, 'error');
+  }
+}
+
+function startPolling(materialId) {
+  if (pollTimers[materialId]) return;
+  pollTimers[materialId] = setInterval(async () => {
+    try {
+      const m = await fetch(`${API}/admin/ingest/status/${materialId}`).then(r => r.json());
+      const card = document.getElementById(`row-${m.materialId}`);
+      if (card) {
+        card.querySelector('.status-badge')?.parentElement?.replaceChildren(...(() => { const d = document.createElement('div'); d.style.marginTop='6px'; d.innerHTML = statusBadge(m.status, m.error); return d.childNodes; })());
+        const sub = card.querySelector('.sub');
+        if (sub && m.chunkCount) sub.textContent = `${selectedCourse ? '' : ''}${m.chunkCount} chunks`;
+        if (m.status === 'failed') {
+          card.querySelector('.actions').innerHTML = `<button class="action-btn" onclick="reprocess('${m.materialId}')">Retry</button><button class="action-btn danger" onclick="deleteMaterial('${m.materialId}')">✕</button>`;
+        }
+      }
+      if (m.status === 'completed' || m.status === 'failed') { clearInterval(pollTimers[materialId]); delete pollTimers[materialId]; }
+    } catch {}
+  }, 2000);
+}
+
+async function reprocess(id) {
+  await fetch(`${API}/admin/ingest/reprocess/${id}`, { method: 'POST' });
+  showToast('Reprocessing…', 'success');
+  startPolling(id);
+}
+
+async function deleteMaterial(id) {
+  if (!confirm('Delete this file and all its chunks?')) return;
+  await fetch(`${API}/admin/ingest/${id}`, { method: 'DELETE' });
+  document.getElementById(`row-${id}`)?.remove();
+  showToast('Deleted', 'success');
+}
+
+async function deleteCourse(id) {
+  if (!confirm('Delete this course and ALL its materials?')) return;
+  await fetch(`${API}/admin/courses/${id}`, { method: 'DELETE' });
+  courses = courses.filter(c => c.id !== id);
+  selectedCourse = null;
+  renderSidebar();
+  document.getElementById('main-panel').innerHTML = `<div class="empty-state"><p>Select a course</p></div>`;
+  showToast('Course deleted', 'success');
+}
+
+async function openAddCourse() {
+  const depts = await fetch(`${API}/admin/courses/departments`).then(r => r.json());
+  const sel = document.getElementById('dept-select');
+  sel.innerHTML = depts.length
+    ? depts.map(d => `<option value="${d.id}">${d.code} — ${d.name}</option>`).join('')
+    : '<option value="">No departments — create one first</option>';
+  document.getElementById('course-modal').style.display = 'flex';
+}
+
+async function saveCourse() {
+  const body = {
+    departmentId: document.getElementById('dept-select').value,
+    code:  document.getElementById('course-code').value.trim().toUpperCase(),
+    title: document.getElementById('course-title').value.trim(),
+    level: parseInt(document.getElementById('course-level').value),
+    description: document.getElementById('course-desc').value.trim(),
+  };
+  if (!body.code || !body.title || !body.departmentId) return showToast('Fill in all required fields', 'error');
+  const res = await fetch(`${API}/admin/courses`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) return showToast(data.message ?? 'Error creating course', 'error');
+  courses.push(data);
+  renderSidebar();
+  closeModal('course-modal');
+  showToast(`${data.code} created`, 'success');
+}
+
+function openAddDept() { closeModal('course-modal'); document.getElementById('dept-modal').style.display = 'flex'; }
+
+async function saveDept() {
+  const body = { code: document.getElementById('dept-code').value.trim().toUpperCase(), name: document.getElementById('dept-name').value.trim() };
+  if (!body.code || !body.name) return showToast('Fill in all fields', 'error');
+  const res = await fetch(`${API}/admin/courses/departments`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) return showToast(data.message ?? 'Error', 'error');
+  closeModal('dept-modal');
+  showToast(`${data.name} created`, 'success');
+  openAddCourse();
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function showToast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+init();
+</script>
+</body>
+</html>
