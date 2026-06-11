@@ -1,0 +1,11 @@
+CS101 Introduction to Computer Science - Syllabus
+
+Topics covered:
+1. Variables and data types
+2. Control flow: if statements and loops
+3. Functions and recursion
+4. Arrays and lists
+5. Introduction to algorithms
+6. Big O notation
+7. Sorting algorithms: bubble sort, merge sort
+8. Basic data structures: stacks, queues

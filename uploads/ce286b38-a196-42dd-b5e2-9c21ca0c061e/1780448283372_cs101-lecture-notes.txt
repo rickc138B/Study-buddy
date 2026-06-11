@@ -1,0 +1,298 @@
+CS101 - Introduction to Computer Science
+Lecture Notes — Compiled
+
+=== TOPIC 1: INTRODUCTION TO PROGRAMMING ===
+
+A program is a set of instructions that tells a computer what to do. Programs are written in programming languages such as Python, Java, and C++. The process of writing programs is called programming or coding.
+
+Key concepts:
+- Source code: the human-readable instructions written by a programmer
+- Compiler: translates source code into machine code the CPU can execute
+- Interpreter: executes source code line by line without compiling first
+- Syntax: the rules that define the structure of a programming language
+- Bug: an error in a program that causes incorrect behaviour
+- Debugging: the process of finding and fixing bugs
+
+Python is an interpreted, high-level language. It uses indentation to define blocks of code.
+
+def greet(name):
+    print("Hello, " + name)
+
+greet("Ada")
+
+=== TOPIC 2: VARIABLES AND DATA TYPES ===
+
+A variable is a named location in memory that stores a value. In Python, you do not need to declare the type — it is inferred automatically.
+
+Data types:
+- int: whole numbers e.g. 5, -3, 100
+- float: decimal numbers e.g. 3.14, -0.5
+- str: text e.g. "hello", "CS101"
+- bool: True or False
+
+Type conversion:
+- int("5") converts the string "5" to the integer 5
+- str(10) converts the integer 10 to the string "10"
+- float(3) converts integer 3 to 3.0
+
+Variable naming rules:
+- Must start with a letter or underscore
+- Cannot contain spaces or special characters
+- Case-sensitive: name and Name are different variables
+
+=== TOPIC 3: CONTROL FLOW ===
+
+Control flow refers to the order in which statements are executed.
+
+If-else statements:
+if score >= 70:
+    print("Pass")
+elif score >= 50:
+    print("Marginal")
+else:
+    print("Fail")
+
+For loop — iterates over a sequence:
+for i in range(5):
+    print(i)
+
+While loop — repeats while a condition is true:
+count = 0
+while count < 5:
+    print(count)
+    count += 1
+
+Common mistakes:
+- Off-by-one errors in loop ranges
+- Infinite loops caused by a condition that never becomes False
+- Forgetting to update the loop variable in a while loop
+
+=== TOPIC 4: FUNCTIONS ===
+
+A function is a reusable block of code that performs a specific task.
+
+def function_name(parameters):
+    return value
+
+Example — factorial:
+def factorial(n):
+    if n == 0:
+        return 1
+    return n * factorial(n - 1)
+
+Key terms:
+- Parameter: variable listed in the function definition
+- Argument: actual value passed when calling the function
+- Return value: the output the function sends back to the caller
+- Scope: variables defined inside a function are local
+
+Built-in functions you must know:
+- len() — returns length of a string or list
+- range() — generates a sequence of numbers
+- print() — outputs to the screen
+- input() — reads user input as a string
+- type() — returns the data type of a value
+
+=== TOPIC 5: RECURSION ===
+
+Recursion is a technique where a function calls itself to solve a smaller version of the same problem.
+
+Every recursive function must have:
+1. Base case — the condition that stops the recursion
+2. Recursive case — the part where the function calls itself
+
+Example — countdown:
+def countdown(n):
+    if n == 0:
+        print("Go!")
+        return
+    print(n)
+    countdown(n - 1)
+
+Example — sum of a list:
+def list_sum(lst):
+    if len(lst) == 0:
+        return 0
+    return lst[0] + list_sum(lst[1:])
+
+The call stack:
+- Each recursive call adds a new frame to the call stack
+- When the base case is reached, frames are popped off in reverse order
+- Too many recursive calls causes a stack overflow
+
+Recursion vs iteration:
+- Any recursive solution can be rewritten as a loop
+- Recursion is often more elegant but uses more memory
+- Iteration is generally faster and avoids stack overflow risk
+
+Common exam questions on recursion:
+- Write a recursive function to compute the nth Fibonacci number
+- Trace the execution of a recursive function step by step
+- Identify the base case and recursive case in a given function
+- Convert a recursive function to an iterative one
+
+=== TOPIC 6: ARRAYS AND LISTS ===
+
+A list in Python is an ordered, mutable collection of items.
+
+my_list = [10, 20, 30, 40, 50]
+
+Common operations:
+- my_list[0] — access first element (indexing starts at 0)
+- my_list[-1] — access last element
+- my_list[1:3] — slice from index 1 to 2
+- my_list.append(60) — add element to end
+- my_list.remove(20) — remove first occurrence of 20
+- len(my_list) — returns 5
+
+2D lists (used to represent matrices or grids):
+matrix = [[1,2,3],[4,5,6],[7,8,9]]
+print(matrix[1][2])  # outputs 6
+
+=== TOPIC 7: SEARCHING ALGORITHMS ===
+
+Linear Search:
+- Check each element one by one from the start
+- Works on unsorted lists
+- Time complexity: O(n)
+
+def linear_search(lst, target):
+    for i in range(len(lst)):
+        if lst[i] == target:
+            return i
+    return -1
+
+Binary Search:
+- Only works on sorted lists
+- Repeatedly divides the search space in half
+- Time complexity: O(log n)
+
+def binary_search(lst, target):
+    low, high = 0, len(lst) - 1
+    while low <= high:
+        mid = (low + high) // 2
+        if lst[mid] == target:
+            return mid
+        elif lst[mid] < target:
+            low = mid + 1
+        else:
+            high = mid - 1
+    return -1
+
+Key comparison for exams:
+- Linear search: O(n) time, works on unsorted data
+- Binary search: O(log n) time, requires sorted data
+- For 1000 elements: linear may check 1000, binary checks at most 10
+
+=== TOPIC 8: SORTING ALGORITHMS ===
+
+Bubble Sort:
+- Repeatedly swaps adjacent elements that are in the wrong order
+- Time complexity: O(n squared) worst and average case
+- Space complexity: O(1) — in-place sort
+
+def bubble_sort(lst):
+    n = len(lst)
+    for i in range(n):
+        for j in range(0, n-i-1):
+            if lst[j] > lst[j+1]:
+                lst[j], lst[j+1] = lst[j+1], lst[j]
+
+Selection Sort:
+- Finds the minimum element and places it at the front
+- Time complexity: O(n squared) in all cases
+- Not stable
+
+Insertion Sort:
+- Builds sorted array one element at a time
+- Time complexity: O(n squared) worst, O(n) best
+- Efficient for small or nearly sorted datasets
+
+Merge Sort:
+- Divide and conquer: split list in half, sort each half, merge
+- Time complexity: O(n log n) in all cases
+- Space complexity: O(n) — not in-place
+- Stable sort
+
+Quick Sort:
+- Picks a pivot, partitions array around it, recurses
+- Time complexity: O(n log n) average, O(n squared) worst case
+- Not stable but very fast in practice
+
+Sorting algorithm comparison:
+Bubble Sort: Best O(n), Average O(n squared), Worst O(n squared), Stable Yes
+Selection Sort: Best O(n squared), Average O(n squared), Worst O(n squared), Stable No
+Insertion Sort: Best O(n), Average O(n squared), Worst O(n squared), Stable Yes
+Merge Sort: Best O(n log n), Average O(n log n), Worst O(n log n), Stable Yes
+Quick Sort: Best O(n log n), Average O(n log n), Worst O(n squared), Stable No
+
+=== TOPIC 9: COMPLEXITY AND BIG-O NOTATION ===
+
+Big-O notation describes how the runtime of an algorithm grows as input size n increases.
+
+Common complexities from fastest to slowest:
+- O(1) — constant time e.g. array index access
+- O(log n) — logarithmic e.g. binary search
+- O(n) — linear e.g. linear search
+- O(n log n) — linearithmic e.g. merge sort
+- O(n squared) — quadratic e.g. bubble sort
+- O(2 to the n) — exponential e.g. naive Fibonacci
+
+Rules for calculating Big-O:
+- Drop constants: O(2n) = O(n)
+- Drop lower order terms: O(n squared + n) = O(n squared)
+- Nested loops multiply: O(n) inside O(n) = O(n squared)
+- Sequential steps add: O(n) + O(n) = O(n)
+
+=== TOPIC 10: OBJECT-ORIENTED PROGRAMMING ===
+
+OOP organises code around objects that combine data (attributes) and behaviour (methods).
+
+Four pillars of OOP:
+1. Encapsulation — bundling data and methods together, hiding internal details
+2. Inheritance — a class can inherit attributes and methods from a parent class
+3. Polymorphism — the same method name behaves differently in different classes
+4. Abstraction — hiding complexity and exposing only what is necessary
+
+Example:
+class Animal:
+    def __init__(self, name):
+        self.name = name
+    def speak(self):
+        pass
+
+class Dog(Animal):
+    def speak(self):
+        return "Woof!"
+
+class Cat(Animal):
+    def speak(self):
+        return "Meow!"
+
+Key terms:
+- Class: blueprint for creating objects
+- Object/Instance: a specific realisation of a class
+- Constructor (__init__): called when an object is created
+- self: refers to the current instance
+- Method overriding: Dog redefines speak() from Animal
+
+=== PAST EXAM QUESTIONS ===
+
+2024 CS101 Final Exam Selected Questions:
+
+Q1. Write a Python function that takes a list of integers and returns the second largest element. [10 marks]
+
+Q2. Trace the execution of bubble_sort([5, 3, 8, 1]) showing the array after each pass. [8 marks]
+
+Q3. Write a recursive function to compute the sum of digits of a positive integer.
+    digit_sum(453) should return 12. [10 marks]
+
+Q4. Explain the difference between a compiler and an interpreter. Give one advantage of each. [6 marks]
+
+Q5. A sorted list contains 1024 elements. What is the maximum number of comparisons binary search would make to find an element? Show your working. [5 marks]
+
+Q6. Define the four pillars of OOP and give a one-sentence example of each. [8 marks]
+
+Q7. What is a stack overflow error in the context of recursion? How can it be prevented? [6 marks]
+
+Q8. Compare Merge Sort and Quick Sort in terms of time complexity, space complexity, and stability. [9 marks]

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyBot — FUTO CS</title>
+<style>
+ * { box-sizing: border-box; margin: 0; padding: 0; }
+ :root { --bg: #0f1117; --surface: #1a1d2e; --border: #2d3148; --text: #e2e8f0; --muted: #64748b; --accent: #3b82f6; --accent2: #6366f1; }
+ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+
+ /* ── Course Picker Screen ── */
+ #picker-screen { flex: 1; overflow-y: auto; padding: 24px 20px 40px; display: flex; flex-direction: column; }
+ .picker-header { text-align: center; padding: 32px 0 28px; }
+ .picker-header .logo { width: 52px; height: 52px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+ .picker-header h1 { font-size: 26px; font-weight: 700; }
+ .picker-header p { color: var(--muted); font-size: 15px; margin-top: 6px; }
+ .dept-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 20px; scrollbar-width: none; }
+ .dept-tabs::-webkit-scrollbar { display: none; }
+ .dept-tab { padding: 7px 16px; border-radius: 99px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; white-space: nowrap; transition: all 0.15s; flex-shrink: 0; }
+ .dept-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+ .level-section { margin-bottom: 24px; }
+ .level-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; padding: 0 2px; }
+ .course-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+ @media (min-width: 480px) { .course-grid { grid-template-columns: repeat(3, 1fr); } }
+ @media (min-width: 768px) { .course-grid { grid-template-columns: repeat(4, 1fr); } }
+ .course-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 12px; cursor: pointer; transition: all 0.15s; }
+ .course-card:hover, .course-card:active { border-color: var(--accent); background: #1e3a5f; }
+ .course-card .code { font-size: 14px; font-weight: 700; color: #93c5fd; }
+ .course-card .title { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+ .browse-level-btn { width: 100%; padding: 11px; border-radius: 10px; border: 1px dashed var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; margin-top: 4px; transition: all 0.15s; }
+ .browse-level-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+ /* ── Chat Screen ── */
+ #chat-screen { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+ .chat-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+ .back-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; display: flex; align-items: center; }
+ .chat-header-info { flex: 1; min-width: 0; }
+ .chat-header-info .course-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+ .chat-header-info .course-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+ .mode-tabs { display: flex; gap: 4px; flex-shrink: 0; }
+ .mode-tab { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; transition: all 0.15s; white-space: nowrap; }
+ .mode-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+ .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
+ .msg { display: flex; flex-direction: column; max-width: 85%; }
+ .msg.user { align-self: flex-end; align-items: flex-end; }
+ .msg.assistant { align-self: flex-start; align-items: flex-start; }
+ .msg-bubble { padding: 11px 14px; border-radius: 16px; font-size: 15px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+ .msg.user .msg-bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+ .msg.assistant .msg-bubble { background: var(--surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+ .msg-bubble.streaming::after { content: '▋'; animation: blink 0.7s infinite; margin-left: 2px; }
+ @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+ .msg-time { font-size: 11px; color: var(--muted); margin-top: 4px; padding: 0 4px; }
+ .input-area { padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+ #msg-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 10px 16px; color: var(--text); font-size: 15px; outline: none; resize: none; max-height: 120px; line-height: 1.4; font-family: inherit; }
+ #msg-input:focus { border-color: var(--accent); }
+ #msg-input::placeholder { color: var(--muted); }
+ .send-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+ .send-btn:hover { background: #2563eb; }
+ .send-btn:disabled { background: var(--border); cursor: not-allowed; }
+ .welcome-msg { text-align: center; padding: 32px 20px; color: var(--muted); }
+ .welcome-msg h3 { font-size: 16px; color: var(--text); margin-bottom: 8px; }
+ .welcome-msg p { font-size: 14px; line-height: 1.6; }
+ .suggestion-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
+ .chip { padding: 7px 14px; border-radius: 99px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 13px; transition: all 0.15s; }
+ .chip:hover { border-color: var(--accent); color: var(--accent); }
+ .typing-indicator { display: flex; gap: 4px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; border-bottom-left-radius: 4px; width: fit-content; }
+ .typing-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: bounce 1.2s infinite; }
+ .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+ .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+ @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+ .scope-banner { background: #1e3a5f; border: 1px solid #3b82f6; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #93c5fd; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; flex-shrink: 0; margin: 0 16px 8px; }
+ .scope-banner button { background: none; border: 1px solid #3b82f6; border-radius: 6px; color: #93c5fd; font-size: 12px; padding: 3px 8px; cursor: pointer; white-space: nowrap; }
+
+ .empty-dept { text-align: center; color: var(--muted); padding: 40px 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- ── Picker Screen ── -->
+<div id="picker-screen">
+ <div class="picker-header">
+   <div class="logo">
+     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+   </div>
+   <h1>StudyBot</h1>
+   <p>FUTO · AI-powered course assistant</p>
+ </div>
+ <div class="dept-tabs" id="dept-tabs"></div>
+ <div id="courses-container"></div>
+</div>
+
+<!-- ── Chat Screen ── -->
+<div id="chat-screen">
+ <div class="chat-header">
+   <button class="back-btn" onclick="goBack()">
+     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+   </button>
+   <div class="chat-header-info">
+     <div class="course-name" id="chat-course-name">CS101</div>
+     <div class="course-sub" id="chat-course-sub">Introduction to Computer Science</div>
+   </div>
+   <div class="mode-tabs">
+     <button class="mode-tab active" onclick="setMode('study', this)">Study</button>
+     <button class="mode-tab" onclick="setMode('quiz', this)">Quiz</button>
+     <button class="mode-tab" onclick="setMode('exam_prep', this)">Exam</button>
+   </div>
+ </div>
+ <div class="scope-banner" id="scope-banner" style="display:none">
+   <span id="scope-text"></span>
+   <button onclick="broadenScope()">Browse all levels</button>
+ </div>
+ <div class="messages" id="messages"></div>
+ <div class="input-area">
+   <textarea id="msg-input" placeholder="Ask anything about this course…" rows="1"
+     onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+   <button class="send-btn" id="send-btn" onclick="sendMessage()">
+     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+   </button>
+ </div>
+</div>
+
+<script>
+const API = 'http://100.121.82.80:3000';
+let allCourses = [], departments = [], activeDept = null;
+let currentCourse = null, currentMode = 'study', history = [], streaming = false;
+let scopeLevel = null; // null = single course, number = all courses at that level
+
+async function init() {
+ try {
+   const [coursesRes, deptsRes] = await Promise.all([
+     fetch(`${API}/admin/courses`),
+     fetch(`${API}/admin/courses/departments`)
+   ]);
+   allCourses = await coursesRes.json();
+   departments = await deptsRes.json();
+   renderDeptTabs();
+ } catch(e) {
+   document.getElementById('courses-container').innerHTML =
+     '<div class="empty-dept">Cannot reach server. Make sure the API is running.</div>';
+ }
+}
+
+function renderDeptTabs() {
+ const tabs = document.getElementById('dept-tabs');
+ if (!departments.length) { tabs.innerHTML = ''; renderCourses(); return; }
+ activeDept = activeDept ?? departments[0].id;
+ tabs.innerHTML = departments.map(d => `
+   <button class="dept-tab ${d.id === activeDept ? 'active' : ''}" onclick="switchDept('${d.id}')">
+     ${d.code}
+   </button>
+ `).join('');
+ renderCourses();
+}
+
+function switchDept(id) {
+ activeDept = id;
+ renderDeptTabs();
+}
+
+function renderCourses() {
+ const container = document.getElementById('courses-container');
+ const filtered = activeDept ? allCourses.filter(c => c.department_id === activeDept) : allCourses;
+
+ if (!filtered.length) {
+   container.innerHTML = '<div class="empty-dept">No courses in this department yet.</div>';
+   return;
+ }
+
+ const byLevel = {};
+ filtered.forEach(c => { if (!byLevel[c.level]) byLevel[c.level] = []; byLevel[c.level].push(c); });
+
+ container.innerHTML = Object.keys(byLevel).sort().map(level => `
+   <div class="level-section">
+     <div class="level-label">${level} Level</div>
+     <div class="course-grid">
+       ${byLevel[level].map(c => `
+         <div class="course-card" onclick="openCourse('${c.id}')">
+           <div class="code">${c.code}</div>
+           <div class="title">${c.title}</div>
+         </div>
+       `).join('')}
+     </div>
+     <button class="browse-level-btn" onclick="openLevel(${level})">
+       Browse all ${level}-level ${departments.find(d=>d.id===activeDept)?.code ?? ''} courses →
+     </button>
+   </div>
+ `).join('');
+}
+
+function openCourse(id) {
+ currentCourse = allCourses.find(c => c.id === id);
+ scopeLevel = null;
+ startChat();
+}
+
+function openLevel(level) {
+ scopeLevel = level;
+ const dept = departments.find(d => d.id === activeDept);
+ const levelCourses = allCourses.filter(c => c.department_id === activeDept && c.level === parseInt(level));
+ currentCourse = levelCourses[0]; // use first course's id for now; TODO: multi-course retrieval
+ startChat(true, level, dept?.code);
+}
+
+function startChat(isLevel = false, level = null, deptCode = null) {
+ history = [];
+ document.getElementById('picker-screen').style.display = 'none';
+ const cs = document.getElementById('chat-screen');
+ cs.style.display = 'flex';
+
+ if (isLevel) {
+   document.getElementById('chat-course-name').textContent = `${deptCode} ${level}-Level`;
+   document.getElementById('chat-course-sub').textContent = `All ${level}-level courses`;
+   const banner = document.getElementById('scope-banner');
+   banner.style.display = 'none';
+ } else {
+   document.getElementById('chat-course-name').textContent = currentCourse.code;
+   document.getElementById('chat-course-sub').textContent = currentCourse.title;
+   const banner = document.getElementById('scope-banner');
+   banner.style.display = 'flex';
+   document.getElementById('scope-text').textContent = `📚 ${currentCourse.code} materials`;
+ }
+
+ renderWelcome();
+ document.getElementById('msg-input').focus();
+}
+
+function broadenScope() {
+ if (!currentCourse) return;
+ scopeLevel = currentCourse.level;
+ document.getElementById('chat-course-name').textContent = `CS ${scopeLevel}-Level`;
+ document.getElementById('chat-course-sub').textContent = `All ${scopeLevel}-level courses`;
+ document.getElementById('scope-banner').style.display = 'none';
+ addSystemMsg(`Now searching across all ${scopeLevel}-level course materials.`);
+}
+
+function goBack() {
+ document.getElementById('chat-screen').style.display = 'none';
+ document.getElementById('picker-screen').style.display = 'flex';
+ currentCourse = null; history = []; scopeLevel = null;
+}
+
+function setMode(mode, btn) {
+ currentMode = mode;
+ document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+ btn.classList.add('active');
+ const labels = { study: 'study mode', quiz: 'quiz mode', exam_prep: 'exam prep mode' };
+ addSystemMsg(`Switched to ${labels[mode]}.`);
+}
+
+function renderWelcome() {
+ const suggestions = {
+   study: ['Explain the key topics', 'Summarise this course', 'What should I focus on?'],
+   quiz:  ['Quiz me on this course', 'Test my knowledge', 'Give me a practice question'],
+   exam_prep: ['What are likely exam topics?', 'Give me predicted questions', 'Key concepts to memorise'],
+ };
+ const msgs = document.getElementById('messages');
+ msgs.innerHTML = `
+   <div class="welcome-msg">
+     <h3>Ready to study ${currentCourse?.code ?? 'this course'} 📖</h3>
+     <p>Ask me anything about the course material.<br>Switch modes to quiz yourself or prep for exams.</p>
+     <div class="suggestion-chips">
+       ${(suggestions[currentMode] ?? suggestions.study).map(s => `
+         <button class="chip" onclick="sendChip('${s}')">${s}</button>
+       `).join('')}
+     </div>
+   </div>
+ `;
+}
+
+function addSystemMsg(text) {
+ const msgs = document.getElementById('messages');
+ const el = document.createElement('div');
+ el.style.cssText = 'text-align:center;font-size:12px;color:var(--muted);padding:4px 0';
+ el.textContent = text;
+ msgs.appendChild(el);
+ msgs.scrollTop = msgs.scrollHeight;
+}
+
+function sendChip(text) {
+ document.getElementById('msg-input').value = text;
+ sendMessage();
+}
+
+function handleKey(e) {
+ if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+ el.style.height = 'auto';
+ el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+async function sendMessage() {
+ if (streaming) return;
+ const input = document.getElementById('msg-input');
+ const text = input.value.trim();
+ if (!text || !currentCourse) return;
+
+ input.value = '';
+ input.style.height = 'auto';
+ document.getElementById('send-btn').disabled = true;
+ streaming = true;
+
+ // Add user message
+ appendMessage('user', text);
+ history.push({ role: 'user', content: text });
+
+ // Typing indicator
+ const typingEl = addTypingIndicator();
+ const msgs = document.getElementById('messages');
+ msgs.scrollTop = msgs.scrollHeight;
+
+ try {
+   const res = await fetch(`${API}/chat`, {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({
+       courseId: currentCourse.id,
+       message: text,
+       mode: currentMode,
+       history: history.slice(-10), // last 5 turns
+     })
+   });
+
+   typingEl.remove();
+
+   if (!res.ok) throw new Error('API error');
+
+   const bubble = appendMessage('assistant', '', true);
+   const reader = res.body.getReader();
+   const decoder = new TextDecoder();
+   let fullText = '';
+
+   while (true) {
+     const { done, value } = await reader.read();
+     if (done) break;
+     const chunk = decoder.decode(value);
+     const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+     for (const line of lines) {
+       const data = line.slice(6);
+       if (data === '[DONE]') break;
+       try {
+         const parsed = JSON.parse(data);
+         if (parsed.text) { fullText += parsed.text; bubble.textContent = fullText; msgs.scrollTop = msgs.scrollHeight; }
+         if (parsed.error) throw new Error(parsed.error);
+       } catch {}
+     }
+   }
+
+   bubble.classList.remove('streaming');
+   history.push({ role: 'assistant', content: fullText });
+
+ } catch(e) {
+   typingEl?.remove();
+   appendMessage('assistant', 'Sorry, something went wrong. Please try again.');
+ } finally {
+   streaming = false;
+   document.getElementById('send-btn').disabled = false;
+   input.focus();
+ }
+}
+
+function appendMessage(role, text, isStreaming = false) {
+ const msgs = document.getElementById('messages');
+ // Remove welcome screen on first message
+ const welcome = msgs.querySelector('.welcome-msg');
+ if (welcome) welcome.remove();
+
+ const wrapper = document.createElement('div');
+ wrapper.className = `msg ${role}`;
+
+ const bubble = document.createElement('div');
+ bubble.className = `msg-bubble${isStreaming ? ' streaming' : ''}`;
+ bubble.textContent = text;
+
+ const time = document.createElement('div');
+ time.className = 'msg-time';
+ time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+ wrapper.appendChild(bubble);
+ wrapper.appendChild(time);
+ msgs.appendChild(wrapper);
+ msgs.scrollTop = msgs.scrollHeight;
+ return bubble;
+}
+
+function addTypingIndicator() {
+ const msgs = document.getElementById('messages');
+ const wrapper = document.createElement('div');
+ wrapper.className = 'msg assistant';
+ wrapper.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+ msgs.appendChild(wrapper);
+ msgs.scrollTop = msgs.scrollHeight;
+ return wrapper;
+}
+
+init();
+</script>
+</body>
+</html>
