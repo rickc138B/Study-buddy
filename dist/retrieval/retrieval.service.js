@@ -22,7 +22,7 @@ let RetrievalService = RetrievalService_1 = class RetrievalService {
     }
     async retrieve(courseId, query, opts = {}) {
         const matchCount = opts.matchCount ?? 6;
-        const threshold = opts.threshold ?? 0.70;
+        const threshold = opts.threshold ?? 0.30;
         this.logger.debug(`Retrieving top ${matchCount} chunks for course ${courseId}`);
         const queryEmbedding = await this.embeddings.embedOne(query);
         const embeddingLiteral = database_service_1.DatabaseService.serializeEmbedding(queryEmbedding);

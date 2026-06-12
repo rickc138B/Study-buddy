@@ -29,7 +29,7 @@ export class RetrievalService {
     opts:     RetrievalOptions = {},
   ): Promise<RetrievedChunk[]> {
     const matchCount = opts.matchCount ?? 6;
-    const threshold  = opts.threshold  ?? 0.70;
+    const threshold  = opts.threshold  ?? 0.30;
 
     this.logger.debug(`Retrieving top ${matchCount} chunks for course ${courseId}`);
 
