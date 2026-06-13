@@ -9,6 +9,7 @@ import { ChatMessage, StudyMode } from './chat.types';
 
 interface ChatRequest {
   courseId:   string;
+  domainId?:  string;
   message:    string;
   mode:       StudyMode;
   history:    ChatMessage[];
@@ -34,7 +35,8 @@ export class ChatController {
     res.setHeader('Connection',    'keep-alive');
     res.flushHeaders();
 
-    const { courseId, message, mode, history, telegramId } = body;
+    const { courseId, domainId, message, mode, history, telegramId } = body;
+    const resolvedId = domainId ?? courseId;
 
     // Resolve API config — user's own key takes priority
     let apiOverride: { apiKey: string; baseUrl: string; model: string } | null = null;
@@ -44,7 +46,7 @@ export class ChatController {
 
     try {
       for await (const chunk of this.chat.streamResponse(
-        courseId, message, mode, history, apiOverride,
+        resolvedId, message, mode, history, apiOverride,
       )) {
         res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
       }

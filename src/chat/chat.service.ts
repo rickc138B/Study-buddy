@@ -25,6 +25,11 @@ export class ChatService {
   }
 
   // ─── Main streaming entry point ──────────────────────────────────────────
+  // Civic domain IDs — add new ones here as they're created
+  private readonly CIVIC_DOMAINS = new Set([
+    '1fccae5b-a8e0-415f-ad54-ac2070764a51', // ELECTIONS_2027
+  ]);
+
   async *streamResponse(
     courseId:    string,
     message:     string,
@@ -35,15 +40,18 @@ export class ChatService {
     const apiKey  = apiOverride?.apiKey  ?? this.apiKey;
     const baseUrl = apiOverride?.baseUrl ?? 'https://openrouter.ai/api/v1';
     const model   = apiOverride?.model   ?? this.model;
+    const isCivic = this.CIVIC_DOMAINS.has(courseId);
     const isQuizRequest = this.detectQuizIntent(message);
 
-    if (isQuizRequest && mode !== 'summary') {
+    if (isQuizRequest && mode !== 'summary' && !isCivic) {
       yield* this.streamQuiz(courseId, message);
       return;
     }
 
     const { context } = await this.retrieval.retrieveAndFormat(courseId, message);
-    const systemPrompt = this.buildSystemPrompt(mode, context);
+    const systemPrompt = isCivic
+      ? this.buildCivicSystemPrompt(context)
+      : this.buildSystemPrompt(mode, context);
 
     const messages = [
       ...history.map(m => ({ role: m.role, content: m.content })),
@@ -223,6 +231,18 @@ Rules:
     };
 
     return modePrompts[mode];
+  }
+
+  // ─── Civic system prompt ─────────────────────────────────────────────────
+  private buildCivicSystemPrompt(context: string): string {
+    return `You are a neutral civic information assistant for Nigerian voters preparing for the 2027 elections.
+Always cite your sources using the format [Source: filename, page X].
+Never express political opinions or favor any candidate or party.
+If the answer is not in the provided context, say clearly: "I don't have verified information on that — please check INEC's official resources at inec.gov.ng."
+Answer in plain, accessible English. Use Nigerian examples where helpful.
+
+Context:
+${context}`;
   }
 
   // ─── Intent detection ─────────────────────────────────────────────────────
