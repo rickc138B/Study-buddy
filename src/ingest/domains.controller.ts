@@ -17,7 +17,7 @@ export class DomainsController {
     const { data, error } = await this.db.client
       .from('knowledge_domains')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('code', { ascending: true });
     if (error) throw new Error(error.message);
     return data ?? [];
   }
