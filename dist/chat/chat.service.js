@@ -14,26 +14,37 @@ exports.ChatService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const retrieval_service_1 = require("../retrieval/retrieval.service");
+const domain_retrieval_service_1 = require("../retrieval/domain-retrieval.service");
 let ChatService = ChatService_1 = class ChatService {
-    constructor(retrieval, config) {
+    constructor(retrieval, domainRetrieval, config) {
         this.retrieval = retrieval;
+        this.domainRetrieval = domainRetrieval;
         this.config = config;
         this.logger = new common_1.Logger(ChatService_1.name);
         this.model = 'meta-llama/llama-4-maverick';
+        // ─── Main streaming entry point ──────────────────────────────────────────
+        // Civic domain IDs — add new ones here as they're created
+        this.CIVIC_DOMAINS = new Set([
+            '1fccae5b-a8e0-415f-ad54-ac2070764a51', // ELECTIONS_2027
+        ]);
         this.apiKey = this.config.getOrThrow('OPENROUTER_API_KEY');
     }
-    // ─── Main streaming entry point ──────────────────────────────────────────
     async *streamResponse(courseId, message, mode, history, apiOverride = null) {
         const apiKey = apiOverride?.apiKey ?? this.apiKey;
         const baseUrl = apiOverride?.baseUrl ?? 'https://openrouter.ai/api/v1';
         const model = apiOverride?.model ?? this.model;
+        const isCivic = this.CIVIC_DOMAINS.has(courseId);
         const isQuizRequest = this.detectQuizIntent(message);
-        if (isQuizRequest && mode !== 'summary') {
+        if (isQuizRequest && mode !== 'summary' && !isCivic) {
             yield* this.streamQuiz(courseId, message);
             return;
         }
-        const { context } = await this.retrieval.retrieveAndFormat(courseId, message);
-        const systemPrompt = this.buildSystemPrompt(mode, context);
+        const { context } = isCivic
+            ? await this.domainRetrieval.retrieveAndFormat(courseId, message)
+            : await this.retrieval.retrieveAndFormat(courseId, message);
+        const systemPrompt = isCivic
+            ? this.buildCivicSystemPrompt(context)
+            : this.buildSystemPrompt(mode, context);
         const messages = [
             ...history.map(m => ({ role: m.role, content: m.content })),
             { role: 'user', content: message },
@@ -200,6 +211,17 @@ Rules:
         };
         return modePrompts[mode];
     }
+    // ─── Civic system prompt ─────────────────────────────────────────────────
+    buildCivicSystemPrompt(context) {
+        return `You are a neutral civic information assistant for Nigerian voters preparing for the 2027 elections.
+Always cite your sources using the format [Source: filename, page X].
+Never express political opinions or favor any candidate or party.
+If the answer is not in the provided context, say clearly: "I don't have verified information on that — please check INEC's official resources at inec.gov.ng."
+Answer in plain, accessible English. Use Nigerian examples where helpful.
+
+Context:
+${context}`;
+    }
     // ─── Intent detection ─────────────────────────────────────────────────────
     detectQuizIntent(message) {
         const lower = message.toLowerCase();
@@ -217,6 +239,7 @@ exports.ChatService = ChatService;
 exports.ChatService = ChatService = ChatService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [retrieval_service_1.RetrievalService,
+        domain_retrieval_service_1.DomainRetrievalService,
         config_1.ConfigService])
 ], ChatService);
 //# sourceMappingURL=chat.service.js.map

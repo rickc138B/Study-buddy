@@ -9,17 +9,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ChatModule = void 0;
 const common_1 = require("@nestjs/common");
 const chat_controller_1 = require("./chat.controller");
+const chat_sessions_controller_1 = require("./chat-sessions.controller");
 const chat_service_1 = require("./chat.service");
 const retrieval_module_1 = require("../retrieval/retrieval.module");
 const user_module_1 = require("../user/user.module");
+const database_service_1 = require("../common/database/database.service");
 let ChatModule = class ChatModule {
 };
 exports.ChatModule = ChatModule;
 exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Module)({
         imports: [retrieval_module_1.RetrievalModule, user_module_1.UserModule],
-        controllers: [chat_controller_1.ChatController],
-        providers: [chat_service_1.ChatService,],
+        controllers: [chat_controller_1.ChatController, chat_sessions_controller_1.ChatSessionsController],
+        providers: [chat_service_1.ChatService, database_service_1.DatabaseService],
     })
 ], ChatModule);
 //# sourceMappingURL=chat.module.js.map

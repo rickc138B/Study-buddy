@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Civic Buddy — Sketch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F6F3EC;
+    --paper-raised: #FFFEFB;
+    --ink: #1C1F1B;
+    --green: #1B4332;
+    --green-soft: #DCE7DE;
+    --ochre: #C8932B;
+    --line: #D8D2C4;
+    --muted: #6B6A63;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--paper); }
+
+  /* ── Header ────────────────────────────── */
+  header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
+    border: 1px solid var(--green);
+    border-radius: 100px;
+    padding: 4px 12px;
+    margin-bottom: 16px;
+  }
+  .stamp::before { content: '●'; font-size: 8px; }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 32px;
+    letter-spacing: -0.01em;
+    color: var(--green);
+    margin-bottom: 6px;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 14.5px;
+    max-width: 340px;
+  }
+
+  /* ── Location chip ─────────────────────── */
+  .location-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 18px 24px 0;
+    padding: 12px 16px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .location-bar .label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .location-bar .value {
+    font-weight: 600;
+    font-size: 15px;
+    margin-top: 2px;
+  }
+  .location-bar button {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--green);
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* ── Topic cards ───────────────────────── */
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 28px 24px 12px;
+  }
+
+  .cards { display: flex; flex-direction: column; gap: 10px; padding: 0 24px; }
+
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .card:hover { border-color: var(--green); }
+
+  .card .icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .icon.green { background: var(--green-soft); color: var(--green); }
+  .icon.ochre { background: #F4E8D0; color: var(--ochre); }
+
+  .card .text { flex: 1; }
+  .card .text .title { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+  .card .text .desc { font-size: 13px; color: var(--muted); }
+
+  .card .arrow { color: var(--line); font-size: 18px; }
+
+  /* ── Featured: comparison preview ─────────── */
+  .compare-preview {
+    margin: 28px 24px 0;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--paper-raised);
+  }
+  .compare-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .compare-header .title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 17px;
+  }
+  .compare-header .topic-pill {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--green-soft);
+    color: var(--green);
+    padding: 4px 10px;
+    border-radius: 100px;
+  }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr;
+  }
+  .candidate-col { padding: 16px; }
+  .compare-grid .divider { background: var(--line); }
+
+  .candidate-name {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  .candidate-party {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 10px;
+  }
+  .candidate-point {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .source-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    padding: 2px 8px;
+    margin-top: 4px;
+  }
+  .source-tag::before { content: '§'; color: var(--ochre); }
+
+  .ask-followup {
+    grid-column: 1 / -1;
+    padding: 12px 16px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--green);
+    font-weight: 600;
+    background: var(--green-soft);
+    cursor: pointer;
+  }
+
+  /* ── Track record timeline ─────────────── */
+  .timeline-card {
+    margin: 14px 24px 0;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--paper-raised);
+  }
+  .timeline-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .timeline-header .title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 17px;
+  }
+  .timeline-row {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .timeline-marker {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .timeline-marker.promise { background: var(--ochre); }
+  .timeline-marker.outcome { background: var(--green); }
+  .timeline-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .timeline-text {
+    font-size: 13px;
+    line-height: 1.55;
+    margin-bottom: 8px;
+  }
+
+  /* ── Representative hierarchy ──────────── */
+  .hierarchy-card {
+    margin: 0 24px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--paper-raised);
+  }
+  .hier-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .hier-row.last { border-bottom: none; }
+  .hier-row.indent-1 { padding-left: 30px; }
+  .hier-row.indent-2 { padding-left: 44px; }
+  .hier-row.indent-3 { padding-left: 58px; }
+  .hier-row.indent-4 { padding-left: 72px; }
+  .hier-row.indent-1::before,
+  .hier-row.indent-2::before,
+  .hier-row.indent-3::before,
+  .hier-row.indent-4::before {
+    content: '↳';
+    position: absolute;
+    left: 16px;
+    color: var(--line);
+    font-size: 13px;
+  }
+  .hier-row.indent-2::before { left: 30px; }
+  .hier-row.indent-3::before { left: 44px; }
+  .hier-row.indent-4::before { left: 58px; }
+
+  .hier-level {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    flex: 1;
+  }
+  .hier-name {
+    font-weight: 600;
+    font-size: 13.5px;
+    text-align: right;
+    flex: 1;
+  }
+  .hier-party {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    background: var(--green-soft);
+    padding: 2px 8px;
+    border-radius: 100px;
+    flex-shrink: 0;
+  }
+
+  /* ── Chat overlay ───────────────────────── */
+  .chat-overlay {
+    position: fixed;
+    top: 0; right: 0;
+    width: 100%; max-width: 480px;
+    height: 100vh;
+    background: var(--paper);
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+  }
+  .chat-overlay.open { transform: translateX(0); }
+
+  .chat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper-raised);
+    flex-shrink: 0;
+  }
+  .back-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--green);
+  }
+  .chat-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--green);
+  }
+
+  .chat-thread {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .msg {
+    max-width: 85%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .msg.bot {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .msg.user {
+    background: var(--green);
+    color: var(--paper);
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+    font-weight: 500;
+  }
+  .msg .source-tag {
+    margin-top: 6px;
+    display: inline-flex;
+  }
+  .msg.bot .source-tag {
+    background: var(--green-soft);
+    border-color: transparent;
+    color: var(--green);
+  }
+
+  .chat-input-bar {
+    margin: 12px 20px 18px;
+    flex-shrink: 0;
+  }
+
+  .ask-anything {
+    margin: 28px 24px 32px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border: 1px solid var(--green);
+    border-radius: 100px;
+    background: var(--paper-raised);
+  }
+  .ask-anything input {
+    border: none;
+    background: none;
+    flex: 1;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+  }
+  .ask-anything input::placeholder { color: var(--muted); }
+  .ask-anything .send {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--paper);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .footnote {
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    padding-bottom: 28px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="stamp">Civic Buddy · Sourced answers</div>
+    <h1>What do you<br>need to know?</h1>
+    <p class="subtitle">Ask about candidates, your voting rights, or how the process works — every answer is backed by a real source.</p>
+  </header>
+
+  <div class="location-bar">
+    <div>
+      <div class="label">Your constituency</div>
+      <div class="value">Owerri Municipal, Imo State</div>
+    </div>
+    <button>Change</button>
+  </div>
+
+  <div class="section-label">Your representatives</div>
+  <div class="hierarchy-card">
+    <div class="hier-row">
+      <div class="hier-level">President</div>
+      <div class="hier-name">Bola Tinubu</div>
+      <div class="hier-party">APC</div>
+    </div>
+    <div class="hier-row indent-1">
+      <div class="hier-level">Governor</div>
+      <div class="hier-name">Hope Uzodinma</div>
+      <div class="hier-party">APC</div>
+    </div>
+    <div class="hier-row indent-2">
+      <div class="hier-level">Senator, Owerri Zone</div>
+      <div class="hier-name">—</div>
+      <div class="hier-party">—</div>
+    </div>
+    <div class="hier-row indent-2">
+      <div class="hier-level">House of Reps</div>
+      <div class="hier-name">—</div>
+      <div class="hier-party">—</div>
+    </div>
+    <div class="hier-row indent-3">
+      <div class="hier-level">State Assembly</div>
+      <div class="hier-name">—</div>
+      <div class="hier-party">—</div>
+    </div>
+    <div class="hier-row indent-4 last">
+      <div class="hier-level">LGA Chairman</div>
+      <div class="hier-name">—</div>
+      <div class="hier-party">—</div>
+    </div>
+    <div class="ask-followup" data-topic="represent-followup">
+      💬 Ask what each of these roles actually does
+    </div>
+  </div>
+
+  <div class="section-label">Browse by topic</div>
+  <div class="cards">
+    <div class="card" data-topic="elections">
+      <div class="icon ochre">🗳</div>
+      <div class="text">
+        <div class="title">Elections near you</div>
+        <div class="desc">What's coming up, and when</div>
+      </div>
+      <div class="arrow">→</div>
+    </div>
+    <div class="card" data-topic="compare">
+      <div class="icon green">⚖</div>
+      <div class="text">
+        <div class="title">Compare candidates</div>
+        <div class="desc">See where they stand, side by side</div>
+      </div>
+      <div class="arrow">→</div>
+    </div>
+    <div class="card" data-topic="rights">
+      <div class="icon ochre">🗳</div>
+      <div class="text">
+        <div class="title">Voting process & your rights</div>
+        <div class="desc">What to expect, what's allowed</div>
+      </div>
+      <div class="arrow">→</div>
+    </div>
+    <div class="card" data-topic="represent">
+      <div class="icon ochre">🏛</div>
+      <div class="text">
+        <div class="title">Who represents you</div>
+        <div class="desc">From president to your ward, in order</div>
+      </div>
+      <div class="arrow">→</div>
+    </div>
+    <div class="card" data-topic="dates">
+      <div class="icon green">📅</div>
+      <div class="text">
+        <div class="title">Key dates & deadlines</div>
+        <div class="desc">Registration, PVC collection, election day</div>
+      </div>
+      <div class="arrow">→</div>
+    </div>
+    <div class="card" data-topic="verify">
+      <div class="icon ochre">🔍</div>
+      <div class="text">
+        <div class="title">Verify a claim</div>
+        <div class="desc">Check quotes & promises against sources</div>
+      </div>
+      <div class="arrow">→</div>
+    </div>
+    <div class="card" data-topic="track">
+      <div class="icon green">📜</div>
+      <div class="text">
+        <div class="title">Track record</div>
+        <div class="desc">2019 promises vs. what happened since</div>
+      </div>
+      <div class="arrow">→</div>
+    </div>
+  </div>
+
+  <div class="section-label">Featured comparison</div>
+  <div class="compare-preview">
+    <div class="compare-header">
+      <div class="title">On Education</div>
+      <div class="topic-pill">Imo State · Governor</div>
+    </div>
+    <div class="compare-grid">
+      <div class="candidate-col">
+        <div class="candidate-name">Candidate A</div>
+        <div class="candidate-party">Party · APGA</div>
+        <div class="candidate-point">Promises free tuition for tertiary students from low-income households, funded through a state education levy.</div>
+        <span class="source-tag">Manifesto, p.14</span>
+      </div>
+      <div class="divider"></div>
+      <div class="candidate-col">
+        <div class="candidate-name">Candidate B</div>
+        <div class="candidate-party">Party · LP</div>
+        <div class="candidate-point">Focuses on rebuilding public school infrastructure across all 27 LGAs within first term.</div>
+        <span class="source-tag">Manifesto, p.9</span>
+      </div>
+      <div class="ask-followup" data-topic="compare-followup">
+        💬 Ask a follow-up about this comparison
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Track record · 2019 → now</div>
+  <div class="timeline-card">
+    <div class="timeline-header">
+      <div class="title">Candidate A on Education</div>
+      <div class="topic-pill">Imo State · Governor</div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-marker promise"></div>
+      <div class="timeline-content">
+        <div class="timeline-tag">2019 Promise</div>
+        <div class="timeline-text">Pledged to build 50 new public schools across the state within first term.</div>
+        <span class="source-tag">2019 Manifesto, p.7</span>
+      </div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-marker outcome"></div>
+      <div class="timeline-content">
+        <div class="timeline-tag">2023 Coverage</div>
+        <div class="timeline-text">Reporting shows 18 schools completed by end of term, with funding gaps cited for the remainder.</div>
+        <span class="source-tag">ICIR, Mar 2023</span>
+      </div>
+    </div>
+    <div class="ask-followup" data-topic="track-followup">
+      💬 Ask how this compares to their 2027 promise
+    </div>
+  </div>
+
+  <div class="ask-anything">
+    <input type="text" placeholder="Or ask anything else...">
+    <div class="send">↑</div>
+  </div>
+
+  <div class="footnote">Every answer cites its source — tap § to verify</div>
+
+</div>
+
+<!-- ── Chat overlay ─────────────────────────── -->
+<div class="chat-overlay" id="chatOverlay">
+  <div class="chat-header">
+    <button class="back-btn" id="backBtn">←</button>
+    <div class="chat-title" id="chatTitle">Topic</div>
+  </div>
+  <div class="chat-thread" id="chatThread"></div>
+  <div class="ask-anything chat-input-bar">
+    <input type="text" placeholder="Ask a follow-up...">
+    <div class="send">↑</div>
+  </div>
+</div>
+
+<script>
+const seeds = {
+  elections: {
+    title: "Elections near you",
+    msgs: [
+      ['bot', "Here's what's coming up for Imo State and the federal level:"],
+      ['bot', "<b>2027 General Election</b> (President, Senate, House of Reps, State Assembly) — Feb 2027, exact date TBC by INEC.<br><br><b>Imo State Governorship</b> — runs off-cycle, next due ~Nov 2027.<br><br><b>LGA elections (Owerri Municipal)</b> — run by Imo SIEC, schedule not yet announced.<span class='source-tag'>INEC calendar</span>"],
+      ['user', "Why is the governorship separate from the presidential election?"],
+      ['bot', "A handful of states — including Imo — ended up on a different election cycle due to past court rulings on tenure. So your governor isn't elected at the same time as the president, even though both matter for who controls Imo's budget and security funding.<span class='source-tag'>INEC, 2019 cycle notes</span>"]
+    ]
+  },
+  compare: {
+    title: "Compare candidates",
+    msgs: [
+      ['user', "What are Candidate A and B saying about education?"],
+      ['bot', "<b>Candidate A (APGA)</b> — promises free tertiary tuition for low-income households, funded via a new state education levy.<span class='source-tag'>Manifesto, p.14</span><br><br><b>Candidate B (LP)</b> — focuses on rebuilding public school infrastructure across all 27 LGAs in the first term.<span class='source-tag'>Manifesto, p.9</span>"],
+      ['user', "Which one is more specific about funding?"],
+      ['bot', "Candidate A names a specific funding mechanism (the education levy). Candidate B's manifesto doesn't specify a funding source for the infrastructure plan — it's stated as a priority without a budget line.<span class='source-tag'>Manifesto comparison</span>"]
+    ]
+  },
+  rights: {
+    title: "Voting process & your rights",
+    msgs: [
+      ['user', "Can someone ask who I voted for?"],
+      ['bot', "No. Under the Electoral Act 2022, your vote is secret. No party agent, official, or security personnel is allowed to ask or pressure you to reveal who you voted for inside or near the polling unit.<span class='source-tag'>Electoral Act 2022, s.61</span>"],
+      ['user', "What if BVAS isn't working at my unit?"],
+      ['bot', "INEC's contingency plan allows manual accreditation using the voter register if BVAS fails, with the presiding officer documenting the issue. You're still entitled to vote — don't leave without raising it with the polling unit officials.<span class='source-tag'>INEC Regulations 2022</span>"]
+    ]
+  },
+  represent: {
+    title: "Who represents you",
+    msgs: [
+      ['bot', "Based on Owerri Municipal, Imo State — here's your chain of representation, from federal to local."],
+      ['user', "What does my State Assembly member actually do?"],
+      ['bot', "They sit in the Imo State House of Assembly and vote on state laws and the state budget — things like healthcare funding, local government allocations, and state-level policy. This is often the most reachable elected office for direct constituent contact.<span class='source-tag'>1999 Constitution, s.4</span>"],
+      ['user', "And the LGA Chairman?"],
+      ['bot', "The LGA Chairman runs day-to-day local government — primary healthcare centres, local roads, markets, and the LGA's share of federal allocation. Historically one of the least-covered offices in Nigerian media despite being closest to daily life.<span class='source-tag'>Local Govt Act</span>"]
+    ]
+  },
+  dates: {
+    title: "Key dates & deadlines",
+    msgs: [
+      ['user', "When does voter registration close?"],
+      ['bot', "INEC typically closes the Continuous Voter Registration (CVR) period about 90 days before a general election. For 2027, that would place the deadline around <b>November 2026</b> — INEC will confirm the exact date closer to the time.<span class='source-tag'>INEC CVR guidelines</span>"],
+      ['user', "What about collecting my PVC?"],
+      ['bot', "PVC collection is ongoing at your registration centre — bring your registration slip or a valid ID. It's best to collect well before the registration deadline, as collection points get congested closer to election day.<span class='source-tag'>INEC Voter Guide</span>"]
+    ]
+  },
+  verify: {
+    title: "Verify a claim",
+    msgs: [
+      ['user', "I saw a post saying Candidate A wants to ban okada completely across the state."],
+      ['bot', "I checked Candidate A's manifesto and recent statements — I don't find a complete ban on okada. The manifesto mentions <i>restricting okada from major highways</i> as part of a road safety plan, not a state-wide ban.<span class='source-tag'>Manifesto, p.22</span><br><br>This looks like it may be an exaggerated or misrepresented version of the actual policy."],
+      ['user', "Where did the original statement come from?"],
+      ['bot', "The closest matching statement is from a town hall covered by Daily Sun in May 2026 — it discusses highway restrictions, not a full ban. I'd treat the version you saw as unverified until you can trace it to that source.<span class='source-tag'>Daily Sun, May 2026</span>"]
+    ]
+  },
+  track: {
+    title: "Track record",
+    msgs: [
+      ['bot', "In 2019, Candidate A promised 50 new public schools across the state within one term.<span class='source-tag'>2019 Manifesto, p.7</span><br><br>Reporting from 2023 shows 18 were completed, with funding gaps cited for the rest.<span class='source-tag'>ICIR, Mar 2023</span>"],
+      ['user', "How does that compare to their 2027 promise?"],
+      ['bot', "The 2027 manifesto repeats a similar pledge — 40 new schools — but this time specifies the education levy as the funding source, which wasn't part of the 2019 plan. Whether that addresses the previous funding gap is something worth asking the candidate directly.<span class='source-tag'>2027 Manifesto, p.11</span>"]
+    ]
+  },
+  general: {
+    title: "Ask Civic Buddy",
+    msgs: [
+      ['bot', "Ask me anything about candidates, your voting rights, representatives, or the election process — I'll answer using sourced documents."]
+    ]
+  }
+};
+
+const overlay = document.getElementById('chatOverlay');
+const thread = document.getElementById('chatThread');
+const titleEl = document.getElementById('chatTitle');
+
+function openChat(topicKey) {
+  const data = seeds[topicKey] || seeds.general;
+  titleEl.textContent = data.title;
+  thread.innerHTML = data.msgs.map(([role, html]) =>
+    `<div class="msg ${role}">${html}</div>`
+  ).join('');
+  overlay.classList.add('open');
+  thread.scrollTop = 0;
+}
+
+document.querySelectorAll('[data-topic]').forEach(el => {
+  el.addEventListener('click', () => {
+    const topic = el.getAttribute('data-topic').replace('-followup', '');
+    openChat(topic);
+  });
+});
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  overlay.classList.remove('open');
+});
+
+document.querySelector('.wrap > .ask-anything').addEventListener('click', () => openChat('general'));
+</script>
+
+</body>
+</html>

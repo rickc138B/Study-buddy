@@ -27,14 +27,15 @@ let ChatController = class ChatController {
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders();
-        const { courseId, message, mode, history, telegramId } = body;
+        const { courseId, domainId, message, mode, history, telegramId } = body;
+        const resolvedId = domainId ?? courseId;
         // Resolve API config — user's own key takes priority
         let apiOverride = null;
         if (telegramId) {
             apiOverride = await this.users.getApiConfig(telegramId);
         }
         try {
-            for await (const chunk of this.chat.streamResponse(courseId, message, mode, history, apiOverride)) {
+            for await (const chunk of this.chat.streamResponse(resolvedId, message, mode, history, apiOverride)) {
                 res.write(`data: ${JSON.stringify({ text: chunk })}\n\n`);
             }
             // Increment usage after successful response (only for platform key users)

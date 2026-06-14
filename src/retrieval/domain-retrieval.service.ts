@@ -21,11 +21,10 @@ export class DomainRetrievalService {
     const threshold  = opts.threshold  ?? 0.10;
 
     const queryEmbedding   = await this.embeddings.embedOne(query);
-    const embeddingLiteral = DatabaseService.serializeEmbedding(queryEmbedding);
 
     const { data, error } = await this.db.client.rpc('match_domain_chunks', {
       p_domain_id:   domainId,
-      p_embedding:   embeddingLiteral,
+      p_embedding:   queryEmbedding as any,
       p_match_count: matchCount,
       p_threshold:   threshold,
     });

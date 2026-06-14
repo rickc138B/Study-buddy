@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RetrievalModule = void 0;
 const common_1 = require("@nestjs/common");
 const retrieval_service_1 = require("./retrieval.service");
+const domain_retrieval_service_1 = require("./domain-retrieval.service");
 const embedding_service_1 = require("../ingest/embedding.service");
 const database_service_1 = require("../common/database/database.service");
 let RetrievalModule = class RetrievalModule {
@@ -16,8 +17,8 @@ let RetrievalModule = class RetrievalModule {
 exports.RetrievalModule = RetrievalModule;
 exports.RetrievalModule = RetrievalModule = __decorate([
     (0, common_1.Module)({
-        providers: [retrieval_service_1.RetrievalService, embedding_service_1.EmbeddingService, database_service_1.DatabaseService],
-        exports: [retrieval_service_1.RetrievalService],
+        providers: [retrieval_service_1.RetrievalService, domain_retrieval_service_1.DomainRetrievalService, embedding_service_1.EmbeddingService, database_service_1.DatabaseService],
+        exports: [retrieval_service_1.RetrievalService, domain_retrieval_service_1.DomainRetrievalService],
     })
 ], RetrievalModule);
 //# sourceMappingURL=retrieval.module.js.map
