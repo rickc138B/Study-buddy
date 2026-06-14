@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService }      from '@nestjs/config';
-import { RetrievalService }   from '../retrieval/retrieval.service';
+import { ConfigService }            from '@nestjs/config';
+import { RetrievalService }         from '../retrieval/retrieval.service';
+import { DomainRetrievalService }   from '../retrieval/domain-retrieval.service';
 import { ChatMessage, StudyMode } from './chat.types';
 
 // ─── Quiz state parsed from LLM output ───────────────────────────────────────
@@ -18,8 +19,9 @@ export class ChatService {
   private readonly model = 'meta-llama/llama-4-maverick';
 
   constructor(
-    private retrieval: RetrievalService,
-    private config:    ConfigService,
+    private retrieval:       RetrievalService,
+    private domainRetrieval: DomainRetrievalService,
+    private config:          ConfigService,
   ) {
     this.apiKey = this.config.getOrThrow<string>('OPENROUTER_API_KEY');
   }
@@ -48,7 +50,9 @@ export class ChatService {
       return;
     }
 
-    const { context } = await this.retrieval.retrieveAndFormat(courseId, message);
+    const { context } = isCivic
+      ? await this.domainRetrieval.retrieveAndFormat(courseId, message)
+      : await this.retrieval.retrieveAndFormat(courseId, message);
     const systemPrompt = isCivic
       ? this.buildCivicSystemPrompt(context)
       : this.buildSystemPrompt(mode, context);
