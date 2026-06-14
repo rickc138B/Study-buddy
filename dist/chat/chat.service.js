@@ -39,9 +39,18 @@ let ChatService = ChatService_1 = class ChatService {
             yield* this.streamQuiz(courseId, message);
             return;
         }
-        const { context } = isCivic
+        const { context, chunks } = isCivic
             ? await this.domainRetrieval.retrieveAndFormat(courseId, message)
             : await this.retrieval.retrieveAndFormat(courseId, message);
+        // Emit sources before streaming text
+        if (chunks && chunks.length > 0) {
+            const sources = chunks.map(c => ({
+                source_file: c.metadata?.source_file ?? 'unknown',
+                page: c.metadata?.page ?? null,
+                content: c.content.slice(0, 300),
+            }));
+            yield `__SOURCES__${JSON.stringify(sources)}__SOURCES_END__`;
+        }
         const systemPrompt = isCivic
             ? this.buildCivicSystemPrompt(context)
             : this.buildSystemPrompt(mode, context);

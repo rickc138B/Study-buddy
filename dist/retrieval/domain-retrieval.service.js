@@ -24,9 +24,10 @@ let DomainRetrievalService = DomainRetrievalService_1 = class DomainRetrievalSer
         const matchCount = opts.matchCount ?? 10;
         const threshold = opts.threshold ?? 0.10;
         const queryEmbedding = await this.embeddings.embedOne(query);
+        const embeddingLiteral = database_service_1.DatabaseService.serializeEmbedding(queryEmbedding);
         const { data, error } = await this.db.client.rpc('match_domain_chunks', {
             p_domain_id: domainId,
-            p_embedding: queryEmbedding,
+            p_embedding: embeddingLiteral,
             p_match_count: matchCount,
             p_threshold: threshold,
         });
