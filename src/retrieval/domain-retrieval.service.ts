@@ -17,8 +17,8 @@ export class DomainRetrievalService {
     query:    string,
     opts:     RetrievalOptions = {},
   ): Promise<RetrievedChunk[]> {
-    const matchCount = opts.matchCount ?? 6;
-    const threshold  = opts.threshold  ?? 0.20;
+    const matchCount = opts.matchCount ?? 10;
+    const threshold  = opts.threshold  ?? 0.10;
 
     const queryEmbedding   = await this.embeddings.embedOne(query);
     const embeddingLiteral = DatabaseService.serializeEmbedding(queryEmbedding);
